@@ -1,0 +1,13 @@
+/* 
+  Localizable.strings
+  TestNoteEdit
+
+  Created by Rahul Yadav on 18/05/19.
+  Copyright © 2019 RYTheDev. All rights reserved.
+*/
+
+"Write anything"  =   "Write anything";
+"Delete"    =   "Delete";
+"Save"    =   "Save";
+"Update"    =   "Update";
+"Your comment"  =   "Your comment";
