@@ -18,6 +18,7 @@ class NoteCreator: UIViewController {
     static let titleMenuItemBold = "Bold"
     static let titleMenuItemItalic = "Italic"
     static let titleMenuItemUnderline = "Underline"
+    static let titleMenuItemInsertImage = "Insert Image"
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -143,6 +144,16 @@ extension NoteCreator{
         
         UIMenuController.shared.menuItems = nil
     }
+    
+    @objc func tappedOnInsertImage(){
+        
+        let imagePicker = UIImagePickerController()
+        imagePicker.sourceType = .photoLibrary
+        imagePicker.delegate = self
+        present(imagePicker, animated: true, completion: nil)
+        
+        UIMenuController.shared.menuItems = nil
+    }
 }
 
 extension NoteCreator: UITextViewDelegate{
@@ -181,11 +192,26 @@ extension NoteCreator: UITextViewDelegate{
                     let menuItemBold = UIMenuItem(title:NoteCreator.titleMenuItemBold, action: #selector(tappedOnBold))
                     let menuItemItalic = UIMenuItem(title:NoteCreator.titleMenuItemItalic, action: #selector(tappedOnItalic))
                     let menuItemUnderline = UIMenuItem(title:NoteCreator.titleMenuItemUnderline, action: #selector(tappedOnUnderline))
+                    let menuItemInsertImage = UIMenuItem(title:NoteCreator.titleMenuItemInsertImage, action: #selector(tappedOnInsertImage))
 
-                    UIMenuController.shared.menuItems = [menuItemBold, menuItemItalic, menuItemUnderline]
+                    UIMenuController.shared.menuItems = [menuItemBold, menuItemItalic, menuItemUnderline, menuItemInsertImage]
                 }
             }
         }
+    }
+    
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        
+//        let updatedTxt = (textView.text! as NSString).replacingCharacters(in: range, with: text)
+//        if updatedTxt.count > 0{
+//            if txtViewEmpty{
+//
+//                txtViewEmpty = false
+//                handleTxtViewEmptyTransition()
+//            }
+//        }
+        
+        return true
     }
     
     /**
@@ -196,16 +222,39 @@ extension NoteCreator: UITextViewDelegate{
         var txt:String!
         var txtColor:UIColor!
         if txtViewEmpty{
+            // Case: showing placeholder
             
             txt = NSLocalizedString(NoteCreator.key_localizable_note_placeHolder, comment: "")
             txtColor = UIColor.lightGray
         }
         else{
+            // Case: ready for input from user
             
-            txt = ""
+            txt = "test"    // textview doesn't accept textcolor without text
             txtColor = UIColor.darkGray
         }
         txtView.attributedText = NSAttributedString(string: txt, attributes: [NSAttributedString.Key.foregroundColor : txtColor, .font:UIFont.systemFont(ofSize: 17.0)])
+        if txtViewEmpty == false {
+            // Case: undoing the dummy text
+            
+            txtView.attributedText = NSAttributedString(string: "")
+        }
+    }
+}
+
+// MARK ----    handling of image picker
+extension NoteCreator: UIImagePickerControllerDelegate, UINavigationControllerDelegate{
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        
+        if let pickedImage = info[.originalImage] as? UIImage{
+            // Case: user has picked an image
+            
+            print("Image's dimension = \(pickedImage.size)")
+            print("Our textview's dimension = \(txtView.bounds.size)")
+        }
+        
+        picker.dismiss(animated: true, completion: nil)
     }
 }
 
