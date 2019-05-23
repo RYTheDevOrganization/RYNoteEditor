@@ -19,11 +19,26 @@ class NoteCreator: UIViewController {
     static let titleMenuItemItalic = "Italic"
     static let titleMenuItemUnderline = "Underline"
     static let titleMenuItemInsertImage = "Insert Image"
+    let basicFont = UIFont.systemFont(ofSize: 17.0)
+    let basicTxtColor = UIColor.darkGray
+    lazy var insertImageMenuItem:UIMenuItem = {
+        
+        let menuItemInsertImage = UIMenuItem(title:NoteCreator.titleMenuItemInsertImage, action: #selector(tappedOnInsertImage))
+        return menuItemInsertImage
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         initialUIConfig()
+        initialConfig()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        
+        
+        
+        super.viewWillDisappear(animated)
     }
     
     // MARK ----    configurations
@@ -40,6 +55,11 @@ class NoteCreator: UIViewController {
         txtView.tintColor = UIColor.darkGray
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Markdown", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEditBtn(sender:)))
+    }
+    
+    private func initialConfig(){
+        
+        UIMenuController.shared.menuItems = [insertImageMenuItem]
     }
     
     // MARK ----    apply markdown
@@ -126,7 +146,7 @@ extension NoteCreator{
         let dictAttr = [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: txtView.font!.pointSize)]
         applyMarkdown(dictAttr: dictAttr)
         
-        UIMenuController.shared.menuItems = nil
+        UIMenuController.shared.menuItems = [insertImageMenuItem]
     }
     
     @objc func tappedOnItalic(){
@@ -134,7 +154,7 @@ extension NoteCreator{
         let dictAttr = [NSAttributedString.Key.font: UIFont.italicSystemFont(ofSize: txtView.font!.pointSize)]
         applyMarkdown(dictAttr: dictAttr)
         
-        UIMenuController.shared.menuItems = nil
+        UIMenuController.shared.menuItems = [insertImageMenuItem]
     }
     
     @objc func tappedOnUnderline(){
@@ -142,7 +162,7 @@ extension NoteCreator{
         let dictAttr = [NSAttributedString.Key.underlineStyle: NSUnderlineStyle.single.rawValue]
         applyMarkdown(dictAttr: dictAttr)
         
-        UIMenuController.shared.menuItems = nil
+        UIMenuController.shared.menuItems = [insertImageMenuItem]
     }
     
     @objc func tappedOnInsertImage(){
@@ -151,8 +171,6 @@ extension NoteCreator{
         imagePicker.sourceType = .photoLibrary
         imagePicker.delegate = self
         present(imagePicker, animated: true, completion: nil)
-        
-        UIMenuController.shared.menuItems = nil
     }
 }
 
@@ -192,9 +210,8 @@ extension NoteCreator: UITextViewDelegate{
                     let menuItemBold = UIMenuItem(title:NoteCreator.titleMenuItemBold, action: #selector(tappedOnBold))
                     let menuItemItalic = UIMenuItem(title:NoteCreator.titleMenuItemItalic, action: #selector(tappedOnItalic))
                     let menuItemUnderline = UIMenuItem(title:NoteCreator.titleMenuItemUnderline, action: #selector(tappedOnUnderline))
-                    let menuItemInsertImage = UIMenuItem(title:NoteCreator.titleMenuItemInsertImage, action: #selector(tappedOnInsertImage))
 
-                    UIMenuController.shared.menuItems = [menuItemBold, menuItemItalic, menuItemUnderline, menuItemInsertImage]
+                    UIMenuController.shared.menuItems = [menuItemBold, menuItemItalic, menuItemUnderline]
                 }
             }
         }
@@ -250,9 +267,24 @@ extension NoteCreator: UIImagePickerControllerDelegate, UINavigationControllerDe
         if let pickedImage = info[.originalImage] as? UIImage{
             // Case: user has picked an image
             
-            print("Image's dimension = \(pickedImage.size)")
-            print("Our textview's dimension = \(txtView.bounds.size)")
+            let txtViewTxtRectWidth = txtView.frame.width - (txtView.textContainer.lineFragmentPadding * 2)
+            let scaledImage = UIImage(cgImage: pickedImage.cgImage!, scale: (pickedImage.size.width/txtViewTxtRectWidth), orientation: UIImage.Orientation.up)
+            
+            let attachment = NSTextAttachment()
+            attachment.image = scaledImage
+            let mAttrStrWithAttachment = NSMutableAttributedString(attachment: attachment)
+            mAttrStrWithAttachment.addAttributes([NSAttributedString.Key.font : basicFont, .foregroundColor: basicTxtColor], range: txtView.selectedRange)
+            
+            let updatedAttrTxt = NSMutableAttributedString(attributedString: txtView.attributedText)
+            updatedAttrTxt.replaceCharacters(in: txtView.selectedRange, with: mAttrStrWithAttachment)
+            
+            txtView.attributedText = updatedAttrTxt
         }
+        
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         
         picker.dismiss(animated: true, completion: nil)
     }

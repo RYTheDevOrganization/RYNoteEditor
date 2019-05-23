@@ -244,7 +244,7 @@
                                 <rect key="frame" x="0.0" y="64" width="375" height="528"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <prototypes>
-                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" id="L90-Ly-rqJ">
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="cell" id="L90-Ly-rqJ" customClass="NoteListCell" customModule="TestNoteEdit" customModuleProvider="target">
                                         <rect key="frame" x="0.0" y="28" width="375" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="L90-Ly-rqJ" id="MXG-NE-mW1">
@@ -276,6 +276,9 @@
                                                 <constraint firstItem="6wB-xB-15W" firstAttribute="leading" secondItem="qJq-XK-7XX" secondAttribute="trailing" constant="15" id="wMQ-WT-RyR"/>
                                             </constraints>
                                         </tableViewCellContentView>
+                                        <connections>
+                                            <outlet property="lbl" destination="qJq-XK-7XX" id="M6F-1x-AOj"/>
+                                        </connections>
                                     </tableViewCell>
                                 </prototypes>
                             </tableView>
