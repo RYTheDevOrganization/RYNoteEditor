@@ -36,8 +36,6 @@ class NoteCreator: UIViewController {
     
     override func viewWillDisappear(_ animated: Bool) {
         
-        
-        
         super.viewWillDisappear(animated)
     }
     
@@ -54,7 +52,8 @@ class NoteCreator: UIViewController {
         txtView.layer.borderColor = UIColor.lightGray.cgColor
         txtView.tintColor = UIColor.darkGray
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Markdown", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEditBtn(sender:)))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Save", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnSave(sender:)))
+        navigationItem.rightBarButtonItem?.isEnabled = false
     }
     
     private func initialConfig(){
@@ -82,64 +81,65 @@ extension NoteCreator{
         txtView.resignFirstResponder()
     }
     
-    @objc func tappedOnEditBtn(sender:UIButton){
+    @objc func tappedOnSave(sender:UIButton){
      
-        txtView.resignFirstResponder()
-        
-        Utility.apply(overlay: editOverlay, on: navigationController!.view, superView: navigationController!.view)
+        if txtViewEmpty == false{
+            
+            NoteManager.singletonInstance().addNote(txtView.attributedText)
+        }
     }
     
-    @IBAction func tappedOnOverlayDone(sender:UIButton){
-        
-        editOverlay.btnBold.isEnabled = false
-        editOverlay.btnItalic.isEnabled = false
-        editOverlay.btnUnderline.isEnabled = false
-
-        editOverlay.removeFromSuperview()
-    }
+//    @IBAction func tappedOnOverlayDone(sender:UIButton){
+//
+//        editOverlay.btnBold.isEnabled = false
+//        editOverlay.btnItalic.isEnabled = false
+//        editOverlay.btnUnderline.isEnabled = false
+//
+//        editOverlay.removeFromSuperview()
+//    }
     
-    @IBAction func panningOnOverlay(sender:UIPanGestureRecognizer){
-
-        func highlightSelectedTxt(tillPos:UITextPosition){
-            
-            let rangeLoc = txtView.offset(from: txtView.beginningOfDocument, to: editOverlay.startTxtPos!)
-            let rangeLength = txtView.offset(from: editOverlay.startTxtPos!, to: tillPos)
-            
-            let mAttrTxt = txtView.attributedText.mutableCopy() as! NSMutableAttributedString
-            mAttrTxt.addAttribute(NSAttributedString.Key.backgroundColor, value: UIColor.yellow, range: NSMakeRange(rangeLoc, rangeLength))
-            txtView.attributedText = mAttrTxt
-        }
-        
-        if sender.state == .began{
-            
-            let loc = sender.location(in: sender.view)
-            editOverlay.startTxtPos = txtView.closestPosition(to: loc)
-        }
-        else if sender.state == .changed || sender.state == .ended{
-            
-            let loc = sender.location(in: sender.view)
-            if let txtPos = txtView.closestPosition(to: loc){
-                
-                highlightSelectedTxt(tillPos: txtPos)
-                editOverlay.endTxtPos = txtPos
-            }
-            
-            if sender.state == .ended{
-                if editOverlay.startTxtPos != nil && editOverlay.endTxtPos != nil{
-                    
-                    editOverlay.btnBold.isEnabled = true
-                    editOverlay.btnItalic.isEnabled = true
-                    editOverlay.btnUnderline.isEnabled = true
-                }
-            }
-        }
-        
-        if sender.state == .ended || sender.state == .cancelled || sender.state == .failed {
-            
-            editOverlay.startTxtPos = nil
-            editOverlay.endTxtPos = nil
-        }
-    }
+//    @IBAction func panningOnOverlay(sender:UIPanGestureRecognizer){
+//
+//        func highlightSelectedTxt(tillPos:UITextPosition){
+//
+//            let rangeLoc = txtView.offset(from: txtView.beginningOfDocument, to: editOverlay.startTxtPos!)
+//            let rangeLength = txtView.offset(from: editOverlay.startTxtPos!, to: tillPos)
+//
+//            let mAttrTxt = txtView.attributedText.mutableCopy() as! NSMutableAttributedString
+//            mAttrTxt.addAttribute(NSAttributedString.Key.backgroundColor, value: UIColor.yellow, range: NSMakeRange(rangeLoc, rangeLength))
+//            txtView.attributedText = mAttrTxt
+//        }
+//
+//        if sender.state == .began{
+//
+//            let loc = sender.location(in: sender.view)
+//            editOverlay.startTxtPos = txtView.closestPosition(to: loc)
+//        }
+//        else if sender.state == .changed || sender.state == .ended{
+//
+//            let loc = sender.location(in: sender.view)
+//            if let txtPos = txtView.closestPosition(to: loc){
+//
+//                highlightSelectedTxt(tillPos: txtPos)
+//                editOverlay.endTxtPos = txtPos
+//            }
+//
+//            if sender.state == .ended{
+//                if editOverlay.startTxtPos != nil && editOverlay.endTxtPos != nil{
+//
+//                    editOverlay.btnBold.isEnabled = true
+//                    editOverlay.btnItalic.isEnabled = true
+//                    editOverlay.btnUnderline.isEnabled = true
+//                }
+//            }
+//        }
+//
+//        if sender.state == .ended || sender.state == .cancelled || sender.state == .failed {
+//
+//            editOverlay.startTxtPos = nil
+//            editOverlay.endTxtPos = nil
+//        }
+//    }
     
     @objc func tappedOnBold(){
         
@@ -219,14 +219,8 @@ extension NoteCreator: UITextViewDelegate{
     
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         
-//        let updatedTxt = (textView.text! as NSString).replacingCharacters(in: range, with: text)
-//        if updatedTxt.count > 0{
-//            if txtViewEmpty{
-//
-//                txtViewEmpty = false
-//                handleTxtViewEmptyTransition()
-//            }
-//        }
+        let updatedTxt = (textView.text! as NSString).replacingCharacters(in: range, with: text)
+        navigationItem.rightBarButtonItem?.isEnabled = updatedTxt.count > 0
         
         return true
     }

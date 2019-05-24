@@ -13,6 +13,12 @@ class NoteList: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
     @IBOutlet weak var myTableview:UITableView!
     
+    override func viewWillAppear(_ animated: Bool) {
+        
+        super.viewWillAppear(animated)
+        
+        myTableview.reloadData()
+    }
     
     // MARK ----    tableview callbacks
     

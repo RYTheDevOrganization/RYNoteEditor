@@ -15,24 +15,27 @@ struct NoteInfo {
     var comment:String?
 }
 
-struct NoteManager {
+class NoteManager {
     
     var arrNote = [NoteInfo]()
+    private static let instance = NoteManager()
     
     static func singletonInstance() -> NoteManager{
         
-        return NoteManager()
+        return NoteManager.instance
     }
     
     private init(){
     }
     
-    mutating func addNote(_ note:NoteInfo){
+    func addNote(_ attrTxt:NSAttributedString){
+        
+        let note = NoteInfo(title: "Note \(arrNote.count + 1)", attrTxt: attrTxt, comment: nil)
         
         arrNote.append(note)
     }
     
-    mutating func updateNote(_ note:NoteInfo){
+    func updateNote(_ note:NoteInfo){
         
         let matchedIdx = arrNote.firstIndex { (thisNote:NoteInfo) -> Bool in
             
