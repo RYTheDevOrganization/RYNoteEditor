@@ -314,7 +314,7 @@
                                                     </constraints>
                                                 </imageView>
                                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="UeH-hT-lh6" userLabel="separator">
-                                                    <rect key="frame" x="0.0" y="43" width="375" height="1"/>
+                                                    <rect key="frame" x="15" y="43" width="345" height="1"/>
                                                     <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                                     <constraints>
                                                         <constraint firstAttribute="height" constant="1" id="D02-Hm-Q4f"/>
@@ -323,9 +323,9 @@
                                             </subviews>
                                             <constraints>
                                                 <constraint firstItem="qJq-XK-7XX" firstAttribute="top" secondItem="MXG-NE-mW1" secondAttribute="top" constant="15" id="EYb-zP-ETN"/>
-                                                <constraint firstItem="UeH-hT-lh6" firstAttribute="trailing" secondItem="MXG-NE-mW1" secondAttribute="trailing" id="HLE-E0-OyD"/>
+                                                <constraint firstItem="UeH-hT-lh6" firstAttribute="trailing" secondItem="6wB-xB-15W" secondAttribute="trailing" id="HLE-E0-OyD"/>
                                                 <constraint firstItem="6wB-xB-15W" firstAttribute="centerY" secondItem="MXG-NE-mW1" secondAttribute="centerY" id="Jkb-bI-Dpo"/>
-                                                <constraint firstItem="UeH-hT-lh6" firstAttribute="leading" secondItem="MXG-NE-mW1" secondAttribute="leading" id="P5N-rh-QOL"/>
+                                                <constraint firstItem="UeH-hT-lh6" firstAttribute="leading" secondItem="qJq-XK-7XX" secondAttribute="leading" id="P5N-rh-QOL"/>
                                                 <constraint firstAttribute="bottom" secondItem="qJq-XK-7XX" secondAttribute="bottom" constant="15" id="RmL-IH-1Aq"/>
                                                 <constraint firstItem="6wB-xB-15W" firstAttribute="width" secondItem="MXG-NE-mW1" secondAttribute="height" multiplier="0.3" id="VCS-yx-q0K"/>
                                                 <constraint firstAttribute="trailing" secondItem="6wB-xB-15W" secondAttribute="trailing" constant="15" id="Wdh-Xp-68b"/>

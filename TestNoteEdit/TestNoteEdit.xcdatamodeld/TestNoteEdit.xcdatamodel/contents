@@ -4,13 +4,14 @@
         <attribute name="range" optional="YES" attributeType="Transformable" syncable="YES"/>
         <attribute name="txt" optional="YES" attributeType="String" syncable="YES"/>
     </entity>
-    <entity name="Note" representedClassName="Note" parentEntity="Comment" syncable="YES" codeGenerationType="class">
+    <entity name="Note" representedClassName="Note" syncable="YES" codeGenerationType="class">
         <attribute name="attrTxt" optional="YES" attributeType="Transformable" syncable="YES"/>
+        <attribute name="title" optional="YES" attributeType="String" syncable="YES"/>
         <attribute name="updatedOn" optional="YES" attributeType="Date" usesScalarValueType="NO" syncable="YES"/>
         <relationship name="comments" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Comment" syncable="YES"/>
     </entity>
     <elements>
-        <element name="Note" positionX="-63" positionY="-18" width="128" height="90"/>
+        <element name="Note" positionX="-63" positionY="-18" width="128" height="105"/>
         <element name="Comment" positionX="-54" positionY="9" width="128" height="75"/>
     </elements>
 </model>

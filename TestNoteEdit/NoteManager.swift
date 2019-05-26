@@ -7,6 +7,8 @@
 //
 
 import Foundation
+import UIKit
+import CoreData
 
 struct NoteInfo {
     
@@ -33,6 +35,7 @@ class NoteManager {
     
     var arrNote = [NoteInfo]()
     private static let instance = NoteManager()
+    let appDelegate = UIApplication.shared.delegate as! AppDelegate
     
     static func singletonInstance() -> NoteManager{
         
@@ -57,5 +60,17 @@ class NoteManager {
         }
         
         arrNote[matchedIdx!] = note
+    }
+    
+    func createNote(with title:String, txt:NSAttributedString){
+        
+        if let note = NSEntityDescription.insertNewObject(forEntityName: "Note", into: appDelegate.persistentContainer.viewContext) as? Note{
+            
+            note.title = title
+            note.attrTxt = txt
+            note.updatedOn = Date()
+            
+            appDelegate.saveContext()
+        }
     }
 }

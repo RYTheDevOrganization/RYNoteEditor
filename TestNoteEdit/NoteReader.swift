@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreData
 
 class NoteReader: UIViewController {
     
@@ -18,7 +19,7 @@ class NoteReader: UIViewController {
     var mode:Mode!
     @IBOutlet weak var txtView: UITextView!
     @IBOutlet var commentView: CommentView!
-    var noteInfo:NoteInfo!
+    var noteInfo:Note!
     var currentHighligtedRange:NSRange?
     var flagInitialDidLayoutSubViews = true
     static let titleMenuItemBold = "Bold"
@@ -26,6 +27,8 @@ class NoteReader: UIViewController {
     static let titleMenuItemUnderline = "Underline"
     static let titleMenuItemInsertImage = "Insert Image"
     static private let key_localizable_note_placeHolder = "Write anything"
+    var currentCommentInfo:Comment?
+    var titleAlertVC:UIAlertController?
 //    var txtViewEmpty = true
     lazy var insertImageMenuItem:UIMenuItem = {
         
@@ -138,7 +141,7 @@ class NoteReader: UIViewController {
             
         case .read:
             
-            txtView.attributedText = noteInfo.attrTxt
+            txtView.attributedText = (noteInfo.attrTxt as! NSAttributedString)
             
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Edit", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEdit))
             txtViewEditable = false
@@ -157,6 +160,29 @@ class NoteReader: UIViewController {
         txtView.isSelectable = txtViewEditable
         
         self.title = title
+    }
+    
+    func askTitleFromUser(){
+        
+        let okAction = UIAlertAction(title: "OK", style: UIAlertAction.Style.default) { [unowned self] (action:UIAlertAction) in
+            
+            if let inputTxtFld = self.titleAlertVC?.textFields?.first{
+                if let title = inputTxtFld.text{
+                    if title.count > 0{
+                     
+                        NoteManager.singletonInstance().createNote(with: title, txt: self.txtView.attributedText)
+                        
+                        self.navigationController?.popViewController(animated: true)
+                    }
+                }
+            }
+        }
+        
+        titleAlertVC = UIAlertController(title: "Title", message: "Provide title for note", preferredStyle: UIAlertController.Style.alert)
+        titleAlertVC?.addAction(okAction)
+        titleAlertVC?.addTextField(configurationHandler: nil)
+        
+        present(titleAlertVC!, animated: true, completion: nil)
     }
     
     // MARK ----    apply markdown
@@ -225,10 +251,24 @@ extension NoteReader{
             
             Utility.apply(overlay: commentView, on: view, superView: view)
             
-            if let existingComment = noteInfo.mDictComment[range]{
+            let filteredComments = noteInfo.comments?.filter({ (thisComment:Any) -> Bool in
+                
+                if thisComment is Comment{
+                    if ((thisComment as! Comment).range as! NSRange) == range{
+                        
+                        return true
+                    }
+                }
+                
+                return false
+            })
+            
+            if (filteredComments?.count)! > 0{
                 // Case: comment exists
                 
-                commentView.txtView.text = existingComment
+                currentCommentInfo = (filteredComments?.first as! Comment)
+                
+                commentView.txtView.text = currentCommentInfo!.txt
                 
                 commentView.btnSave.isHidden = true
                 commentView.btnDelete.isHidden = false
@@ -256,24 +296,8 @@ extension NoteReader{
         txtView.attributedText = mAttrTxt
         
         noteInfo.attrTxt = mAttrTxt
-        noteInfo.mDictComment[currentHighligtedRange!] = nil
-        NoteManager.singletonInstance().updateNote(noteInfo)
-        
-        commentView.removeFromSuperview()
-    }
-    
-    @IBAction func tappedOnUpdateComment(){
-        
-        if commentView.txtView.text.count == 0{
-            // Case: no comment
-            
-            tappedOnDeleteComment()
-            
-            return
-        }
-        
-        noteInfo.mDictComment[currentHighligtedRange!] = commentView.txtView.text
-        NoteManager.singletonInstance().updateNote(noteInfo)
+        noteInfo.removeFromComments(currentCommentInfo!)
+        AppDelegate.instance.saveContext()
         
         commentView.removeFromSuperview()
     }
@@ -290,16 +314,36 @@ extension NoteReader{
         else{
             // Case: comment exists
             
-            noteInfo.mDictComment[currentHighligtedRange!] = commentView.txtView.text
-            NoteManager.singletonInstance().updateNote(noteInfo)
+            let comment = NSEntityDescription.insertNewObject(forEntityName: "Comment", into: AppDelegate.instance.persistentContainer.viewContext) as! Comment
+            comment.txt = commentView.txtView.text
+            comment.range = currentHighligtedRange! as NSValue
+            
+            noteInfo.addToComments(comment)
         }
+        
+        commentView.removeFromSuperview()
+    }
+    
+    
+    @IBAction func tappedOnUpdateComment(){
+        
+        if commentView.txtView.text.count == 0{
+            // Case: no comment
+            
+            tappedOnDeleteComment()
+            
+            return
+        }
+        
+        currentCommentInfo!.txt = commentView.txtView.text
+        AppDelegate.instance.saveContext()
         
         commentView.removeFromSuperview()
     }
     
     @IBAction func tappedOnClose(){
         
-        if noteInfo.mDictComment[currentHighligtedRange!] == nil{
+        if currentCommentInfo == nil{
             // Case: not an existing comment. Lets undo highlighting
             
             let mAttrTxt = NSMutableAttributedString(attributedString: txtView.attributedText)
@@ -376,14 +420,17 @@ extension NoteReader{
                 //      &&
                 //      user has written something
                 
-                NoteManager.singletonInstance().addNote(txtView.attributedText)
+//                NoteManager.singletonInstance().addNote(txtView.attributedText)
+                
+                askTitleFromUser()
             }
         }
         else{
             // Case: read/edit mode
             
             noteInfo.attrTxt = txtView.attributedText
-            NoteManager.singletonInstance().updateNote(noteInfo)
+            noteInfo.updatedOn = Date()
+            AppDelegate.instance.saveContext()
         }
         
         navigationController?.popViewController(animated: true)
@@ -468,18 +515,27 @@ extension NoteReader: UITextViewDelegate{
         
         if mode == .edit{
             
-            let affectedRanges = noteInfo.mDictComment.keys.filter { (commentRange:NSRange) -> Bool in
+            let filteredComments = noteInfo.comments?.filter({ (thisComment:Any) -> Bool in
                 
-                return NSIntersectionRange(commentRange, range).length > 0 ? true : false
-            }
+                if thisComment is Comment{
+                    
+                    if NSIntersectionRange(((thisComment as! Comment).range as! NSRange), range).length > 0{
+                        
+                        return true
+                    }
+                }
+                
+                return false
+            })
             
-            for affectedRange in affectedRanges{
+            for filteredComment in filteredComments!{
                 // Case: edit is being done inside commented range. We will remove the comment.
                 
-                noteInfo.mDictComment[affectedRange] = nil
+                noteInfo.removeFromComments(filteredComment as! Comment)
+                AppDelegate.instance.saveContext()
                 
                 let mAttrTxt = NSMutableAttributedString(attributedString: txtView.attributedText)
-                mAttrTxt.addAttribute(NSAttributedString.Key.backgroundColor, value: UIColor.white, range: affectedRange)
+                mAttrTxt.addAttribute(NSAttributedString.Key.backgroundColor, value: UIColor.white, range: ((filteredComment as! Comment).range as! NSRange))
                 txtView.attributedText = mAttrTxt
             }
         }
