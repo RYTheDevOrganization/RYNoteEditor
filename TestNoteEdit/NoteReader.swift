@@ -18,7 +18,10 @@ class NoteReader: UIViewController {
     var mode:Mode!
     @IBOutlet weak var txtView: UITextView!
     @IBOutlet var commentView: CommentView!
-    var noteInfo:NoteInfo!
+    lazy var noteInfo:NoteInfo = {
+        
+        
+    }()
     var currentHighligtedRange:NSRange?
     var flagInitialDidLayoutSubViews = true
     static let titleMenuItemBold = "Bold"
@@ -70,7 +73,8 @@ class NoteReader: UIViewController {
         
         txtView.tintColor = UIColor.darkGray
         
-//        configureRightBarBtnItem()
+        // custom back btn
+        configureCustomBackBtn()
     }
 
     private func initialConfig(){
@@ -87,6 +91,35 @@ class NoteReader: UIViewController {
         configureAsPerMode()
         
         UIMenuController.shared.menuItems = [insertImageMenuItem]
+    }
+    
+    private func configureCustomBackBtn(){
+        
+        let contentView = UIView(frame: CGRect(x: 0, y: 0, width: 44, height: 44))
+        contentView.backgroundColor = UIColor.clear
+        
+        // imgVw
+        let imgVw = UIImageView(image: UIImage(named: "leftArrow"));
+        imgVw.translatesAutoresizingMaskIntoConstraints = false
+        
+        contentView.addSubview(imgVw)
+        NSLayoutConstraint.activate([
+            
+            imgVw.widthAnchor.constraint(equalToConstant: 25),
+            imgVw.heightAnchor.constraint(equalToConstant: 25),
+            imgVw.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            imgVw.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+            
+            ])
+        
+        // Button
+        
+        let overlayBtn = UIButton()
+        Utility.apply(overlay: overlayBtn, on: contentView, superView: contentView)
+        overlayBtn.addTarget(self, action: #selector(tappedOnBack), for: UIControl.Event.touchUpInside)
+        
+        navigationItem.hidesBackButton = true
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: contentView)
     }
     
 //    /**
@@ -352,6 +385,11 @@ extension NoteReader{
         applyMarkdown(dictAttr: dictAttr)
         
         UIMenuController.shared.menuItems = [insertImageMenuItem]
+    }
+    
+    @objc func tappedOnBack(){
+    
+        navigationController?.popViewController(animated: true)
     }
 }
 
