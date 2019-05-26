@@ -49,9 +49,14 @@ class NoteList: UIViewController, UITableViewDataSource, UITableViewDelegate {
                     
                     let readerVC = segue.destination as! NoteReader
                     readerVC.noteInfo = noteInfo
+                    readerVC.mode = .read
                 }
             }
+        }
+        else if segue.identifier == "create"{
             
+            let readerVC = segue.destination as! NoteReader
+            readerVC.mode = .create
         }
     }
 }

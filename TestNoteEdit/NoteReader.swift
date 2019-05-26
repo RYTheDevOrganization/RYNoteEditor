@@ -10,11 +10,28 @@ import UIKit
 
 class NoteReader: UIViewController {
     
+    enum Mode{
+        
+        case create, read, edit
+    }
+    
+    var mode:Mode!
     @IBOutlet weak var txtView: UITextView!
     @IBOutlet var commentView: CommentView!
     var noteInfo:NoteInfo!
     var currentHighligtedRange:NSRange?
     var flagInitialDidLayoutSubViews = true
+    static let titleMenuItemBold = "Bold"
+    static let titleMenuItemItalic = "Italic"
+    static let titleMenuItemUnderline = "Underline"
+    static let titleMenuItemInsertImage = "Insert Image"
+    static private let key_localizable_note_placeHolder = "Write anything"
+    var txtViewEmpty = true
+    lazy var insertImageMenuItem:UIMenuItem = {
+        
+        let menuItemInsertImage = UIMenuItem(title:NoteCreator.titleMenuItemInsertImage, action: #selector(tappedOnInsertImage))
+        return menuItemInsertImage
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -47,13 +64,126 @@ class NoteReader: UIViewController {
         commentView.txtView.tintColor = UIColor.darkGray
         commentView.btnDelete.layer.borderColor = UIColor.lightGray.cgColor
         
-//        let editBarBtnItem = UIBarButtonItem(title: "Edit", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEdit))
-//        navigationItem.rightBarButtonItem = editBarBtnItem
+        let keyboardToolBar = Bundle.main.loadNibNamed(KeyboardToolBar.nibName, owner: nil, options: nil)?.first as! KeyboardToolBar
+        keyboardToolBar.btnDone.addTarget(self, action: #selector(tappedOnKeyboardDone(sender:)), for: .touchUpInside)
+        txtView.inputAccessoryView = keyboardToolBar
+        
+        txtView.tintColor = UIColor.darkGray
+        
+//        configureRightBarBtnItem()
     }
 
     private func initialConfig(){
         
-        txtView.attributedText = noteInfo.attrTxt
+//        if mode == .read{
+//
+//            txtView.attributedText = noteInfo.attrTxt
+//        }
+//        else{
+//
+//            handleTxtViewEmptyTransition()
+//        }
+        
+        configureAsPerMode()
+        
+        UIMenuController.shared.menuItems = [insertImageMenuItem]
+    }
+    
+//    /**
+//     Based on the current mode, I update right bar btn item
+//     */
+//    private func configureRightBarBtnItem(){
+//
+//        let rightBarBtnItem:UIBarButtonItem!
+//        switch mode! {
+//
+//            case .create:
+//
+//                rightBarBtnItem = UIBarButtonItem(title: "Save", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnSave(sender:)))
+//
+//            case .read:
+//
+//                rightBarBtnItem = UIBarButtonItem(title: "Edit", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEdit))
+//
+//            default:
+//
+//                rightBarBtnItem = UIBarButtonItem(title: "Done", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEditDone))
+//        }
+//        navigationItem.rightBarButtonItem = rightBarBtnItem
+//    }
+    
+    /**
+     I configure as per the current mode
+    */
+    private func configureAsPerMode(){
+        
+        let txtViewEditable:Bool!// = (mode == .read) ? false : true
+//        txtView.isEditable = txtViewEditable
+//        txtView.isSelectable = txtViewEditable
+//
+        let rightBarBtnItem:UIBarButtonItem!
+        switch mode! {
+            
+        case .create:
+            
+            rightBarBtnItem = UIBarButtonItem(title: "Save", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnSave(sender:)))
+            txtViewEditable = true
+            handleTxtViewEmptyTransition()
+            
+        case .read:
+            
+            rightBarBtnItem = UIBarButtonItem(title: "Edit", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEdit))
+            txtViewEditable = false
+            
+        default:
+            
+            rightBarBtnItem = UIBarButtonItem(title: "Done", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEditDone))
+            txtViewEditable = true
+        }
+        navigationItem.rightBarButtonItem = rightBarBtnItem
+        txtView.isEditable = txtViewEditable
+        txtView.isSelectable = txtViewEditable
+        
+//        configureRightBarBtnItem()
+    }
+    
+    // MARK ----    apply markdown
+    
+    func applyMarkdown(dictAttr:[NSAttributedString.Key:Any]){
+        
+        let rangeLoc = txtView.offset(from: txtView.beginningOfDocument, to: txtView.selectedTextRange!.start)
+        let rangeLength = txtView.offset(from: txtView.selectedTextRange!.start, to: txtView.selectedTextRange!.end)
+        
+        let mAttrTxt = txtView.attributedText.mutableCopy() as! NSMutableAttributedString
+        mAttrTxt.addAttribute(dictAttr.keys.first!, value: dictAttr.values.first!, range: NSMakeRange(rangeLoc, rangeLength))
+        txtView.attributedText = mAttrTxt
+    }
+    
+    /**
+     I set the placeholder, text color etc when textview becomes empty or about to have a text
+     */
+    func handleTxtViewEmptyTransition(){
+        
+        var txt:String!
+        var txtColor:UIColor!
+        if txtViewEmpty{
+            // Case: showing placeholder
+            
+            txt = NSLocalizedString(NoteReader.key_localizable_note_placeHolder, comment: "")
+            txtColor = UIColor.lightGray
+        }
+        else{
+            // Case: ready for input from user
+            
+            txt = "test"    // textview doesn't accept textcolor without text
+            txtColor = UIColor.darkGray
+        }
+        txtView.attributedText = NSAttributedString(string: txt, attributes: [NSAttributedString.Key.foregroundColor : txtColor, .font:UIFont.systemFont(ofSize: 17.0)])
+        if txtViewEmpty == false {
+            // Case: undoing the dummy text
+            
+            txtView.attributedText = NSAttributedString(string: "")
+        }
     }
 }
 
@@ -170,11 +300,142 @@ extension NoteReader{
         commentView.removeFromSuperview()
     }
     
-//    @objc private func tappedOnEdit(){
-//
-//        txtView.isEditable = true
-//        txtView.isSelectable = true
-//    }
+    @objc private func tappedOnEdit(){
+        
+        mode = .edit
+        configureAsPerMode()
+    }
+    
+    @objc private func tappedOnEditDone(){
+
+        mode = .read
+        configureAsPerMode()
+    }
+    
+    @objc func tappedOnKeyboardDone(sender:UIButton){
+        
+        txtView.resignFirstResponder()
+    }
+    
+    @objc func tappedOnInsertImage(){
+        
+        let imagePicker = UIImagePickerController()
+        imagePicker.sourceType = .photoLibrary
+        imagePicker.delegate = self
+        present(imagePicker, animated: true, completion: nil)
+    }
+    
+    @objc func tappedOnSave(sender:UIButton){
+        
+        NoteManager.singletonInstance().addNote(txtView.attributedText)
+    }
+    
+    @objc func tappedOnBold(){
+        
+        let dictAttr = [NSAttributedString.Key.font: UIFont.boldSystemFont(ofSize: txtView.font!.pointSize)]
+        applyMarkdown(dictAttr: dictAttr)
+        
+        UIMenuController.shared.menuItems = [insertImageMenuItem]
+    }
+    
+    @objc func tappedOnItalic(){
+        
+        let dictAttr = [NSAttributedString.Key.font: UIFont.italicSystemFont(ofSize: txtView.font!.pointSize)]
+        applyMarkdown(dictAttr: dictAttr)
+        
+        UIMenuController.shared.menuItems = [insertImageMenuItem]
+    }
+    
+    @objc func tappedOnUnderline(){
+        
+        let dictAttr = [NSAttributedString.Key.underlineStyle: NSUnderlineStyle.single.rawValue]
+        applyMarkdown(dictAttr: dictAttr)
+        
+        UIMenuController.shared.menuItems = [insertImageMenuItem]
+    }
+}
+
+// MARK: ----    handling of image picker
+extension NoteReader: UIImagePickerControllerDelegate, UINavigationControllerDelegate{
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        
+        if let pickedImage = info[.originalImage] as? UIImage{
+            // Case: user has picked an image
+            
+            let txtViewTxtRectWidth = txtView.frame.width - (txtView.textContainer.lineFragmentPadding * 2)
+            let scaledImage = UIImage(cgImage: pickedImage.cgImage!, scale: (pickedImage.size.width/txtViewTxtRectWidth), orientation: UIImage.Orientation.up)
+            
+            let attachment = NSTextAttachment()
+            attachment.image = scaledImage
+            let mAttrStrWithAttachment = NSMutableAttributedString(attachment: attachment)
+            
+            let updatedAttrTxt = NSMutableAttributedString(attributedString: txtView.attributedText)
+            updatedAttrTxt.replaceCharacters(in: txtView.selectedRange, with: mAttrStrWithAttachment)
+            
+            txtView.attributedText = updatedAttrTxt
+        }
+        
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        
+        picker.dismiss(animated: true, completion: nil)
+    }
+}
+
+// MARK:    ----    textview callbacks
+extension NoteReader: UITextViewDelegate{
+
+    func textViewDidBeginEditing(_ textView: UITextView) {
+        
+        if txtViewEmpty {
+            
+            txtViewEmpty = false
+            handleTxtViewEmptyTransition()
+        }
+    }
+    
+    func textViewDidEndEditing(_ textView: UITextView) {
+        
+        if textView.text.count == 0{
+            
+            txtViewEmpty = true
+            handleTxtViewEmptyTransition()
+        }
+    }
+    
+    func textViewShouldEndEditing(_ textView: UITextView) -> Bool {
+        
+        textView.resignFirstResponder()
+        
+        return true
+    }
+
+    func textViewDidChangeSelection(_ textView: UITextView) {
+        
+        if txtView.selectedTextRange != nil{
+            if let selectedTxt = txtView.text(in: textView.selectedTextRange!){
+                if selectedTxt.count > 0{
+                    
+                    let menuItemBold = UIMenuItem(title:NoteCreator.titleMenuItemBold, action: #selector(tappedOnBold))
+                    let menuItemItalic = UIMenuItem(title:NoteCreator.titleMenuItemItalic, action: #selector(tappedOnItalic))
+                    let menuItemUnderline = UIMenuItem(title:NoteCreator.titleMenuItemUnderline, action: #selector(tappedOnUnderline))
+                    
+                    UIMenuController.shared.menuItems = [menuItemBold, menuItemItalic, menuItemUnderline]
+                }
+            }
+        }
+    }
+
+    func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
+        
+        let updatedTxt = (textView.text! as NSString).replacingCharacters(in: range, with: text)
+        navigationItem.rightBarButtonItem?.isEnabled = updatedTxt.count > 0
+        
+        return true
+    }
 }
 
 class CommentView: UIView {
