@@ -11,6 +11,12 @@ import UIKit
 
 class NoteCreator: UIViewController {
     
+    enum Mode{
+        
+        case create, read, edit
+    }
+    
+    var mode:Mode!
     @IBOutlet weak var txtView: UITextView!
     static private let key_localizable_note_placeHolder = "Write anything"
     var txtViewEmpty = true
@@ -172,6 +178,12 @@ extension NoteCreator{
         imagePicker.delegate = self
         present(imagePicker, animated: true, completion: nil)
     }
+    
+    @objc private func tappedOnEdit(){
+
+        txtView.isEditable = true
+        txtView.isSelectable = true
+    }
 }
 
 extension NoteCreator: UITextViewDelegate{
@@ -253,7 +265,7 @@ extension NoteCreator: UITextViewDelegate{
     }
 }
 
-// MARK ----    handling of image picker
+// MARK: ----    handling of image picker
 extension NoteCreator: UIImagePickerControllerDelegate, UINavigationControllerDelegate{
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
