@@ -42,11 +42,6 @@ class NoteManager {
     private init(){
     }
     
-//    func returnNewNote() -> NoteInfo{
-//        
-//        let noteInfo = NoteInfo(title: "Note \(ar)", attrTxt: <#T##NSAttributedString#>)
-//    }
-    
     func addNote(_ attrTxt:NSAttributedString){
         
         let note = NoteInfo(title: "Note \(arrNote.count + 1)", attrTxt: attrTxt)

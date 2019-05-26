@@ -18,10 +18,7 @@ class NoteReader: UIViewController {
     var mode:Mode!
     @IBOutlet weak var txtView: UITextView!
     @IBOutlet var commentView: CommentView!
-    lazy var noteInfo:NoteInfo = {
-        
-        
-    }()
+    var noteInfo:NoteInfo!
     var currentHighligtedRange:NSRange?
     var flagInitialDidLayoutSubViews = true
     static let titleMenuItemBold = "Bold"
@@ -29,7 +26,7 @@ class NoteReader: UIViewController {
     static let titleMenuItemUnderline = "Underline"
     static let titleMenuItemInsertImage = "Insert Image"
     static private let key_localizable_note_placeHolder = "Write anything"
-    var txtViewEmpty = true
+//    var txtViewEmpty = true
     lazy var insertImageMenuItem:UIMenuItem = {
         
         let menuItemInsertImage = UIMenuItem(title:NoteCreator.titleMenuItemInsertImage, action: #selector(tappedOnInsertImage))
@@ -122,62 +119,44 @@ class NoteReader: UIViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: contentView)
     }
     
-//    /**
-//     Based on the current mode, I update right bar btn item
-//     */
-//    private func configureRightBarBtnItem(){
-//
-//        let rightBarBtnItem:UIBarButtonItem!
-//        switch mode! {
-//
-//            case .create:
-//
-//                rightBarBtnItem = UIBarButtonItem(title: "Save", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnSave(sender:)))
-//
-//            case .read:
-//
-//                rightBarBtnItem = UIBarButtonItem(title: "Edit", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEdit))
-//
-//            default:
-//
-//                rightBarBtnItem = UIBarButtonItem(title: "Done", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEditDone))
-//        }
-//        navigationItem.rightBarButtonItem = rightBarBtnItem
-//    }
-    
     /**
      I configure as per the current mode
     */
     private func configureAsPerMode(){
         
-        let txtViewEditable:Bool!// = (mode == .read) ? false : true
-//        txtView.isEditable = txtViewEditable
-//        txtView.isSelectable = txtViewEditable
-//
-        let rightBarBtnItem:UIBarButtonItem!
+        let txtViewEditable:Bool!
+        let title:String!
+        
         switch mode! {
             
         case .create:
             
-            rightBarBtnItem = UIBarButtonItem(title: "Save", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnSave(sender:)))
             txtViewEditable = true
-            handleTxtViewEmptyTransition()
+//            handleTxtViewEmptyTransition()
+          
+            title = "Create"
             
         case .read:
             
-            rightBarBtnItem = UIBarButtonItem(title: "Edit", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEdit))
+            txtView.attributedText = noteInfo.attrTxt
+            
+            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Edit", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEdit))
             txtViewEditable = false
+            
+            title = "Read"
             
         default:
             
-            rightBarBtnItem = UIBarButtonItem(title: "Done", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEditDone))
+            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Done", style: UIBarButtonItem.Style.plain, target: self, action: #selector(tappedOnEditDone))
             txtViewEditable = true
+            
+            title = "Edit"
         }
-        navigationItem.rightBarButtonItem = rightBarBtnItem
+        
         txtView.isEditable = txtViewEditable
         txtView.isSelectable = txtViewEditable
         
-//        configureRightBarBtnItem()
+        self.title = title
     }
     
     // MARK ----    apply markdown
@@ -192,32 +171,32 @@ class NoteReader: UIViewController {
         txtView.attributedText = mAttrTxt
     }
     
-    /**
-     I set the placeholder, text color etc when textview becomes empty or about to have a text
-     */
-    func handleTxtViewEmptyTransition(){
-        
-        var txt:String!
-        var txtColor:UIColor!
-        if txtViewEmpty{
-            // Case: showing placeholder
-            
-            txt = NSLocalizedString(NoteReader.key_localizable_note_placeHolder, comment: "")
-            txtColor = UIColor.lightGray
-        }
-        else{
-            // Case: ready for input from user
-            
-            txt = "test"    // textview doesn't accept textcolor without text
-            txtColor = UIColor.darkGray
-        }
-        txtView.attributedText = NSAttributedString(string: txt, attributes: [NSAttributedString.Key.foregroundColor : txtColor, .font:UIFont.systemFont(ofSize: 17.0)])
-        if txtViewEmpty == false {
-            // Case: undoing the dummy text
-            
-            txtView.attributedText = NSAttributedString(string: "")
-        }
-    }
+//    /**
+//     I set the placeholder, text color etc when textview becomes empty or about to have a text
+//     */
+//    func handleTxtViewEmptyTransition(){
+//
+//        var txt:String!
+//        var txtColor:UIColor!
+//        if txtViewEmpty{
+//            // Case: showing placeholder
+//
+//            txt = NSLocalizedString(NoteReader.key_localizable_note_placeHolder, comment: "")
+//            txtColor = UIColor.lightGray
+//        }
+//        else{
+//            // Case: ready for input from user
+//
+//            txt = "test"    // textview doesn't accept textcolor without text
+//            txtColor = UIColor.darkGray
+//        }
+//        txtView.attributedText = NSAttributedString(string: txt, attributes: [NSAttributedString.Key.foregroundColor : txtColor, .font:UIFont.systemFont(ofSize: 17.0)])
+//        if txtViewEmpty == false {
+//            // Case: undoing the dummy text
+//
+//            txtView.attributedText = NSAttributedString(string: "")
+//        }
+//    }
 }
 
 extension NoteReader{
@@ -341,6 +320,8 @@ extension NoteReader{
     
     @objc private func tappedOnEditDone(){
 
+        noteInfo.attrTxt = txtView.attributedText
+        
         mode = .read
         configureAsPerMode()
     }
@@ -388,7 +369,23 @@ extension NoteReader{
     }
     
     @objc func tappedOnBack(){
-    
+        
+        if mode == .create{
+            if txtView.attributedText.length > 0{
+                // Case: create mode
+                //      &&
+                //      user has written something
+                
+                NoteManager.singletonInstance().addNote(txtView.attributedText)
+            }
+        }
+        else{
+            // Case: read/edit mode
+            
+            noteInfo.attrTxt = txtView.attributedText
+            NoteManager.singletonInstance().updateNote(noteInfo)
+        }
+        
         navigationController?.popViewController(animated: true)
     }
 }
@@ -426,23 +423,23 @@ extension NoteReader: UIImagePickerControllerDelegate, UINavigationControllerDel
 // MARK:    ----    textview callbacks
 extension NoteReader: UITextViewDelegate{
 
-    func textViewDidBeginEditing(_ textView: UITextView) {
-        
-        if txtViewEmpty {
-            
-            txtViewEmpty = false
-            handleTxtViewEmptyTransition()
-        }
-    }
-    
-    func textViewDidEndEditing(_ textView: UITextView) {
-        
-        if textView.text.count == 0{
-            
-            txtViewEmpty = true
-            handleTxtViewEmptyTransition()
-        }
-    }
+//    func textViewDidBeginEditing(_ textView: UITextView) {
+//
+//        if txtViewEmpty {
+//
+//            txtViewEmpty = false
+//            handleTxtViewEmptyTransition()
+//        }
+//    }
+//
+//    func textViewDidEndEditing(_ textView: UITextView) {
+//
+//        if textView.text.count == 0{
+//
+//            txtViewEmpty = true
+//            handleTxtViewEmptyTransition()
+//        }
+//    }
     
     func textViewShouldEndEditing(_ textView: UITextView) -> Bool {
         
@@ -469,8 +466,23 @@ extension NoteReader: UITextViewDelegate{
 
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
         
-        let updatedTxt = (textView.text! as NSString).replacingCharacters(in: range, with: text)
-        navigationItem.rightBarButtonItem?.isEnabled = updatedTxt.count > 0
+        if mode == .edit{
+            
+            let affectedRanges = noteInfo.mDictComment.keys.filter { (commentRange:NSRange) -> Bool in
+                
+                return NSIntersectionRange(commentRange, range).length > 0 ? true : false
+            }
+            
+            for affectedRange in affectedRanges{
+                // Case: edit is being done inside commented range. We will remove the comment.
+                
+                noteInfo.mDictComment[affectedRange] = nil
+                
+                let mAttrTxt = NSMutableAttributedString(attributedString: txtView.attributedText)
+                mAttrTxt.addAttribute(NSAttributedString.Key.backgroundColor, value: UIColor.white, range: affectedRange)
+                txtView.attributedText = mAttrTxt
+            }
+        }
         
         return true
     }
