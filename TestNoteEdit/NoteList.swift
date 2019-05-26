@@ -20,7 +20,7 @@ class NoteList: UIViewController, UITableViewDataSource, UITableViewDelegate {
         myTableview.reloadData()
     }
     
-    // MARK ----    tableview callbacks
+    // MARK:    ----    tableview callbacks
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
 
@@ -34,9 +34,30 @@ class NoteList: UIViewController, UITableViewDataSource, UITableViewDelegate {
         
         return cell
     }
+    
+    // MARK:    ---- segue callbacks
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        
+        if segue.identifier == "reader"{
+            
+            if let cell = sender as? NoteListCell{
+                
+                if let indexPath = myTableview.indexPath(for: cell){
+                    
+                    let noteInfo = NoteManager.singletonInstance().arrNote[indexPath.row]
+                    
+                    let readerVC = segue.destination as! NoteReader
+                    readerVC.noteInfo = noteInfo
+                }
+            }
+            
+        }
+    }
 }
 
 class NoteListCell: UITableViewCell {
     
     @IBOutlet weak var lbl:UILabel!
+    @IBOutlet weak var vwSeparator: UIView!
 }

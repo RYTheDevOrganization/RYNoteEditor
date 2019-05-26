@@ -10,9 +10,23 @@ import Foundation
 
 struct NoteInfo {
     
+//    struct Comment:Hashable{
+//
+//        var txt:String!
+//        let range:NSRange!
+//    }
+    
     let title:String
     var attrTxt:NSAttributedString
-    var comment:String?
+    var mDictComment = [NSRange:String]()
+    
+    init(title:String, attrTxt:NSAttributedString){
+        
+        self.title = title
+        self.attrTxt = attrTxt
+    }
+//    var comment:String?
+//    var commentRange:NSRange?
 }
 
 class NoteManager {
@@ -30,7 +44,7 @@ class NoteManager {
     
     func addNote(_ attrTxt:NSAttributedString){
         
-        let note = NoteInfo(title: "Note \(arrNote.count + 1)", attrTxt: attrTxt, comment: nil)
+        let note = NoteInfo(title: "Note \(arrNote.count + 1)", attrTxt: attrTxt)
         
         arrNote.append(note)
     }
